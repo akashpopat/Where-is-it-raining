@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Where is it raining?</title>
+</head>
+<body>
+    <h1>Where is it raining?</h1>
+    <ul id="precipitation-list">
+        <!-- List of precipitation statuses will be populated here -->
+    </ul>
+
+    <script>
+        const rainiestLocations = [
+            { name: "Mawsynram, India", lat: 25.2986, lon: 91.5822 },
+            { name: "Cherrapunji, India", lat: 25.2841, lon: 91.7194 },
+            { name: "Tutunendo, Colombia", lat: 5.4528, lon: -76.6083 },
+            { name: "Cropp River, New Zealand", lat: -42.6150, lon: 171.4550 },
+            { name: "Debundscha, Cameroon", lat: 4.1200, lon: 9.0800 },
+            { name: "San Antonio de Ureca, Equatorial Guinea", lat: 3.4296, lon: 8.5492 },
+            { name: "Big Bog, Hawaii, USA", lat: 21.2778, lon: -156.3933 },
+            { name: "Mt. Waialeale, Hawaii, USA", lat: 22.0786, lon: -159.5008 },
+            { name: "Kukui, Maui, Hawaii, USA", lat: 20.8989, lon: -156.5959 },
+            { name: "Emei Shan, Sichuan Province, China", lat: 29.525, lon: 103.332 },
+            { name: "Henderson Lake, Canada", lat: 49.0801, lon: -125.4965 },
+            { name: "Bellenden Ker, Queensland, Australia", lat: -17.265, lon: 145.868 },
+            { name: "Taipei, Taiwan", lat: 25.0330, lon: 121.5654 },
+            { name: "Hilo, Hawaii, USA", lat: 19.7074, lon: -155.0828 },
+            { name: "Yakushima, Japan", lat: 30.3714, lon: 130.6577 },
+            { name: "Quibdó, Colombia", lat: 5.6918, lon: -76.6583 },
+            { name: "Alofi, Niue", lat: -19.0595, lon: -169.9205 },
+            { name: "Taitung, Taiwan", lat: 22.7583, lon: 121.1444 },
+            { name: "Bhutan", lat: 27.5142, lon: 90.4336 },
+            { name: "Pago Pago, American Samoa", lat: -14.2781, lon: -170.7020 },
+            { name: "Aomori, Japan", lat: 40.8222, lon: 140.7474 },
+            { name: "Sapporo, Japan", lat: 43.0618, lon: 141.3545 },
+            { name: "Toyama, Japan", lat: 36.6953, lon: 137.2113 },
+            { name: "Quebec City, Canada", lat: 46.8139, lon: -71.2082 },
+            { name: "Syracuse, New York, USA", lat: 43.0481, lon: -76.1474 },
+            { name: "St. John's, Newfoundland, Canada", lat: 47.5615, lon: -52.7126 },
+            { name: "Erie, Pennsylvania, USA", lat: 42.1292, lon: -80.0851 },
+            { name: "Duluth, Minnesota, USA", lat: 46.7867, lon: -92.1005 },
+            { name: "Valdez, Alaska, USA", lat: 61.1308, lon: -146.3483 },
+            { name: "Blue Canyon, California, USA", lat: 39.2765, lon: -120.7108 },
+            { name: "Yellowknife, Canada", lat: 62.4540, lon: -114.3718 },
+            { name: "Kiruna, Sweden", lat: 67.8558, lon: 20.2253 },
+            { name: "Fairbanks, Alaska, USA", lat: 64.8378, lon: -147.7164 },
+            { name: "Reykjavik, Iceland", lat: 64.1466, lon: -21.9426 },
+            { name: "Nuuk, Greenland", lat: 64.1835, lon: -51.7216 },
+            { name: "Rovaniemi, Finland", lat: 66.5039, lon: 25.7294 }
+        ];
+
+        async function fetchPrecipitationData(location) {
+            try {
+                const response = await fetch(`https://imn-api.meteoplaza.com/v4/nowcast/timeseries/${location.lat}/${location.lon}`);
+                const data = await response.json();
+                const relevantPrecipitation = data.data.filter(point => point.precipitationrate > 0)
+                                                        .sort((a, b) => {
+                                                            const priorities = {
+                                                                'snow': 1,
+                                                                'freezing rain': 2,
+                                                                'wet snow': 3,
+                                                                'rain': 4
+                                                            };
+                                                            return priorities[a.precipitationtype] - priorities[b.precipitationtype];
+                                                        });
+                return relevantPrecipitation.length ? relevantPrecipitation[0].precipitationtype : 'dry';
+            } catch (error) {
+                console.error(`Error fetching data for ${location.name}:`, error);
+                return 'unknown';
+            }
+        }
+
+        async function displayPrecipitationStatuses() {
+            const precipitationList = document.getElementById('precipitation-list');
+            for (const location of rainiestLocations) {
+                const precipitationType = await fetchPrecipitationData(location);
+                if (precipitationType !== 'dry') {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${location.name} (Lat: ${location.lat}, Lon: ${location.lon}) - ${precipitationType}`;
+                    precipitationList.appendChild(listItem);
+                }
+            }
+        }
+
+        displayPrecipitationStatuses();
+    </script>
+</body>
+</html>
